@@ -3,22 +3,28 @@
 
 LiquidCrystal lcd(7, 6, 5, 4, 3, 2); // LCD pins
 
-// Predefined GPS coordinates for simulation
-float locations[12][2] = {
-  {28.0658, -80.6244}, // Panther Dining Hall (Car's location)
-  {28.0659, -80.6238}, // Evans Library
-  {28.0662, -80.6250}, // Clemente Center for Sports and Recreation
-  {28.0665, -80.6235}, // Olin Engineering Complex
-  {28.0657, -80.6232}, // Gleason Performing Arts Center
-  {28.0660, -80.6225}, // Skurla Hall
-  {28.0654, -80.6240}, // Roberts Hall
-  {28.0656, -80.6236},  // Denius Student Center
-
-  // Places far away.
-  {28.0836, -80.6081}, // Melbourne Beach
-  {28.1173, -80.6257}, // Downtown Melbourne
-  {28.5721, -80.6480}  // Kennedy Space Center
+// A structure to map the lcoation cordinates with the name of the place.
+struct Location {
+  String name;   
+  float latitude;  
+  float longitude; 
 };
+
+Location locations[] = {
+  {"Panther Dining Hall", 28.0658, -80.6244}, // Car's location
+  {"Evans Library", 28.0659, -80.6238}, // Should open the car
+  {"Melbourne Beach", 28.0836, -80.6081}, //Should be the Eavesdropper
+  {"Skurla Hall", 28.0660, -80.6225}, // Should be out of range.
+
+  {"Clemente Center for Sports and Recreation", 28.0662, -80.6250},
+  {"Olin Engineering Complex", 28.0665, -80.6235},
+  {"Gleason Performing Arts Center", 28.0657, -80.6232},
+  {"Roberts Hall", 28.0654, -80.6240},
+  {"Denius Student Center", 28.0656, -80.6236},
+  {"Downtown Melbourne", 28.1173, -80.6257},
+  {"Kennedy Space Center", 28.5721, -80.6480}
+};
+const int numLocations = sizeof(locations) / sizeof(locations[0]); // Calculate the size of the array
 
 // Car's stationary location (latitude, longitude)
 float carLocation[2] = {28.0658, -80.6244};
@@ -40,15 +46,16 @@ int logIndex = 0;
 unsigned long lastUpdate = 0;
 
 // Function to calculate distance between two GPS coordinates
-float calculateDistance(float lat1, float lon1, float lat2, float lon2) {
+float calculateDistance(const Location& loc1, const Location& loc2) {
   float R = 6371.0; // Earth's radius in kilometers
-  float dLat = radians(lat2 - lat1);
-  float dLon = radians(lon2 - lon1);
+  float dLat = radians(loc2.latitude - loc1.latitude);
+  float dLon = radians(loc2.longitude - loc1.longitude);
   float a = sin(dLat / 2) * sin(dLat / 2) +
-            cos(radians(lat1)) * cos(radians(lat2)) *
+            cos(radians(loc1.latitude)) * cos(radians(loc2.latitude)) *
             sin(dLon / 2) * sin(dLon / 2);
   float c = 2 * atan2(sqrt(a), sqrt(1 - a));
   return R * c * 1000; // Distance in meters
+}
 }
 
 // Encrypt message using AES-128
@@ -83,6 +90,8 @@ bool detectEavesdropper() {
 
 void setup() {
   lcd.begin(16, 2); // Initialize LCD
+  Serial.begin(9600); // Start serial communication at 9600 baud for the serial input
+
   // Initialize the GPS log with zero values
   for (int i = 0; i < LOG_SIZE; i++) {
     keyLocationLog[i][0] = 0.0;
@@ -92,25 +101,34 @@ void setup() {
 
 void loop() {
   if (millis() - lastUpdate >= 25000) { // Update every 25 seconds
-    lastUpdate = millis();
+    astUpdate = millis();
 
     // Simulate getting the key's GPS location
     static int locationIndex = 0;
-    locationIndex = (locationIndex + 1) % 4; // Cycle through predefined locations list
-    float keyLat = locations[locationIndex][0];
-    float keyLon = locations[locationIndex][1];
+    locationIndex = (locationIndex + 1) % numLocations; // Cycle through all predefined locations
+    Location keyLocation = locations[locationIndex]; // Get the current key location as a Location struct
+
+    Location carLocation = locations[0]; // Panther Dining Hall (Car's location)
 
     // Add the current key location to the GPS log
-    keyLocationLog[logIndex][0] = keyLat;
-    keyLocationLog[logIndex][1] = keyLon;
+    keyLocationLog[logIndex][0] = keyLocation.latitude;
+    keyLocationLog[logIndex][1] = keyLocation.longitude;
     logIndex = (logIndex + 1) % LOG_SIZE; // Move to the next log index (circular buffer)
 
     // Calculate the distance between the car and the key
-    float distance = calculateDistance(carLocation[0], carLocation[1], keyLat, keyLon);
+    float distance = calculateDistance(carLocation, keyLocation);
 
     // Clear the LCD screen for new messages
     lcd.clear();
 
+     // Output the key location and distance and info of the status of the key.
+      Serial.println(" -------------- \n ");
+      Serial.print("Key Location: ");
+      Serial.println(keyLocation.name);
+      Serial.print("Distance to Car: ");
+      Serial.print(distance, 1);
+      Serial.println(" meters");
+     
     // If the key is near the car
     if (distance <= 70.0) { // Within 70 meters
       const char *message = "open";
@@ -119,20 +137,25 @@ void loop() {
 
       if (decryptedSignal == "open") { // If decrypted successfully
         lcd.print("Open the car");
+        Serial.println("Car unlocked: Key is in range.");
+
       } else {
         lcd.print("Auth Failed");
+        Serial.println("Car Auth Failed");
       }
     } 
     // If an eavesdropper is detected
     else if (detectEavesdropper()) {
       lcd.print("Eavesdropper!");
       lcd.setCursor(0, 1);
-      lcd.print("Lock Disabled");
-      // Disable the car's locking system or raise an alert
+      lcd.print("Lock Disabled");       // Disable the car's locking system or raise an alert
+        Serial.println("Alert: Eavesdropper detected! Lock disabled.");
+
     } 
     // Key is too far but no eavesdropper detected
     else {
       lcd.print("Fake Key");
+            Serial.println("Car locked: Key is out of range or fake.");
     }
 
     // Display the distance on the second line
