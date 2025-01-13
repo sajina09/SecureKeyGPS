@@ -1,117 +1,69 @@
 # GPS and MCU Simulation in Proteus
 
-This project simulates a **GPS-based car access control system** and **anomaly detection system** using an LCD display, AES encryption, and predefined GPS coordinates. The simulation is designed to run in a Proteus environment to demonstrate secure car unlocking based on proximity.
+This project simulates a **GPS-based car access control system** with **anomaly detection** using a microcontroller and LCD in Proteus. The system ensures secure car unlocking based on proximity using GPS and AES encryption.
 
 ---
 
 ## Features
-1. **GPS Simulation**:
-   - Predefined locations simulate a GPS receiver.
-   - Tracks the car's location and a key's location.
-   - Measures the distance between the car and the key.
-
-2. **AES Encryption**:
-   - Commands (e.g., "open") are encrypted using AES-128 before transmission.
-   - Ensures secure communication between devices.
-
-3. **Anomaly Detection**:
-   - Detects unusual key movements (e.g., an eavesdropper carrying a cloned key away).
-   - Alerts and disables car access if an anomaly is detected.
-
-4. **LCD Output**:
-   - Displays the system status, distance between car and key, and alerts.
+- **GPS Simulation**:
+  - Tracks the car and key locations.
+  - Calculates the distance between them.
+- **AES Encryption**:
+  - Secures commands like "open" with AES-128 encryption.
+- **Anomaly Detection**:
+  - Identifies suspicious key movements and raises alerts.
+- **LCD Display**:
+  - Shows system status, distance, and alerts.
 
 ---
 
-## Hardware Simulation Requirements
-To simulate this project in **Proteus**, ensure the following components are included:
-1. **Microcontroller (MCU)**: Arduino or similar.
-2. **16x2 LCD Display**.
-3. **GPS Module (simulated using predefined coordinates)**.
-4. **AES Encryption Library**: Simulated in the code using the `AESLib` library.
-5. **Virtual Terminal (optional)**: To log encrypted and decrypted messages for debugging.
-
----
-
-## Software Dependencies
-- **Arduino IDE**:
-  - Include the following libraries:
-    - `LiquidCrystal.h` for LCD control.
-    - `AESLib.h` for AES encryption.
-- **Proteus Simulation Software**.
+## Requirements
+- **Hardware in Proteus**:
+  - Microcontroller (e.g., Arduino)
+  - 16x2 LCD
+  - GPS module (simulated coordinates)
+- **Software**:
+  - Arduino IDE with `LiquidCrystal.h` and `AESLib.h`
+  - Proteus simulation software
 
 ---
 
 ## How It Works
-1. **Initialization**:
-   - The LCD and GPS log buffer are initialized.
-   - AES encryption key and initialization vector are predefined.
-
-2. **Main Loop**:
-   - The key's GPS location updates every 25 seconds.
-   - The system calculates the distance between the car and the key.
-   - If the key is within 70 meters of the car:
-     - The system sends an "open" command encrypted with AES-128.
-     - The signal is decrypted and verified.
-     - The car unlocks if verification succeeds.
-   - If an anomaly (e.g., key movement > 1 km) is detected:
-     - The system locks down and raises an alert.
-   - If the key is out of range, the system displays a "Fake Key" message.
-
----
-
-## Messages on LCD
-- **Open the Car**:
-  - The key is in proximity, and the command is authenticated.
-- **Fake Key**:
-  - The key is too far from the car.
-- **Eavesdropper**:
-  - Suspicious key movement detected; the system locks down.
-- **Dist: X.XXm**:
-  - Displays the calculated distance between the car and the key.
-
----
-
-## Code Overview
-### Key Components:
-1. **GPS Simulation**:
-   - Predefined locations simulate GPS updates.
-   - Uses a circular buffer to log the last 5 minutes of key movements.
-
-2. **Distance Calculation**:
-   - Haversine formula calculates the distance between two coordinates.
-
-3. **Encryption and Decryption**:
-   - AES-128 encrypts the "open" command.
-   - Decryption verifies the authenticity of the signal.
-
-4. **Anomaly Detection**:
-   - Compares current key location with the log to detect suspicious movements.
+1. **Distance Calculation**:
+   - Uses GPS data to calculate the distance between car and key.
+2. **Unlocking**:
+   - If the key is within 70 meters, the system sends an encrypted "open" command.
+3. **Anomaly Detection**:
+   - Detects unusual key movements and locks the system.
+4. **LCD Messages**:
+   - Displays distance, status, or alerts like "Fake Key" or "Eavesdropper."
 
 ---
 
 ## Customization
-- **Locations**:
-  - Update the `locations` array to simulate new GPS points.
-- **Distance Threshold**:
-  - Adjust the `70.0` meter range for unlocking.
-- **Anomaly Detection Threshold**:
-  - Change the `1000.0` meter limit to fine-tune eavesdropper detection.
+- **Change GPS Points**:
+  - Update predefined coordinates for new locations.
+- **Adjust Distance**:
+  - Modify the proximity threshold for unlocking.
 
 ---
 
-## Simulation Steps in Proteus
-1. Set up the circuit with an Arduino, 16x2 LCD, and a GPS module.
-2. Upload the code to the simulated MCU.
-3. Observe the LCD output as the system processes GPS locations and reacts to various scenarios.
+## Simulation Steps
+1. Build the circuit in Proteus with Arduino, GPS, and LCD.
+2. Upload the code to the MCU.
+3. Test the system by simulating different GPS locations.
 
 ---
 
-## Future Enhancements
-- **Real GPS Integration**: Replace simulated coordinates with real GPS module data.
-- **Bluetooth/WiFi Communication**: Enable secure wireless communication.
-- **Additional Alerts**: Integrate alarms or notifications for eavesdropping detection.
+## Additional Information
+The detailed paper explaining this project has been attached. You can go through it for an in-depth understanding.
 
 ---
 
-Enjoy building and simulating this secure car access system in Proteus!
+## Future Improvements
+- Use a real GPS module for live data.
+- Add Bluetooth or WiFi for wireless communication.
+
+---
+
+This project demonstrates a secure and interactive car access system in a simulated environment.
